@@ -1,13 +1,60 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="de">
 <head>
-  <meta charset="utf-8">
-  <title>Filmmanager</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta charset="UTF-8">
+  <title>Film & Serien Bewertung</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <app-root></app-root>
+
+<header>
+  <h1>🎬 Film & Serien Finder</h1>
+</header>
+
+<section class="search-box">
+  <input type="text" placeholder="Film oder Serie suchen...">
+  <button>Suchen</button>
+</section>
+
+<section class="content">
+
+  <div class="card">
+    <h2>Breaking Bad</h2>
+    <p>Genre: Drama</p>
+
+    <div class="rating">
+      <span>⭐ Bewertung:</span>
+      <select>
+        <option>1</option>
+        <option>2</option>
+        <option>3</option>
+        <option>4</option>
+        <option>5</option>
+      </select>
+    </div>
+
+    <button class="save-btn">Speichern</button>
+  </div>
+
+  <div class="card">
+    <h2>Inception</h2>
+    <p>Genre: Sci-Fi</p>
+
+    <div class="rating">
+      <span>⭐ Bewertung:</span>
+      <select>
+        <option>1</option>
+        <option>2</option>
+        <option>3</option>
+        <option>4</option>
+        <option>5</option>
+      </select>
+    </div>
+
+    <button class="save-btn">Speichern</button>
+  </div>
+
+</section>
+
 </body>
 </html>
