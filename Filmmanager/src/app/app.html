@@ -1,0 +1,451 @@
+<div class="page-shell">
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="hero-kicker">Persoenlicher Filmkatalog</p>
+      <h1>FilmManager Pro</h1>
+      <p class="hero-text">
+        Filme verwalten, Titel schnell finden und Bewertungen mit Kommentaren direkt im Katalog pflegen.
+      </p>
+    </div>
+
+    <div class="hero-stats">
+      <article>
+        <span>Filme</span>
+        <strong>{{ films.length }}</strong>
+      </article>
+      <article>
+        <span>Bewertungen</span>
+        <strong>{{ anzahlBewertungen }}</strong>
+      </article>
+      <article>
+        <span>Durchschnitt</span>
+        <strong>{{ durchschnittLabel }}</strong>
+      </article>
+    </div>
+  </header>
+
+  @if (hinweis) {
+    <section class="hinweis" [class.hinweis-error]="hinweis.type === 'error'">
+      {{ hinweis.text }}
+    </section>
+  }
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="panel">
+        @if (!currentUser) {
+          <div class="panel-header">
+            <h2>Anmelden</h2>
+            <p>Registrierte Nutzer koennen Filme bewerten und ihr Profil pflegen.</p>
+          </div>
+
+          <form class="stack-form" (ngSubmit)="anmelden()">
+            <label>
+              <span>Benutzername</span>
+              <input
+                type="text"
+                name="login-benutzername"
+                [(ngModel)]="loginForm.benutzername"
+                required
+              />
+            </label>
+
+            <label>
+              <span>Passwort</span>
+              <input
+                type="password"
+                name="login-passwort"
+                [(ngModel)]="loginForm.passwort"
+                required
+              />
+            </label>
+
+            <button type="submit">Jetzt anmelden</button>
+          </form>
+
+          <div class="divider"></div>
+
+          <div class="panel-header">
+            <h2>Registrieren</h2>
+            <p>Benutzername, E-Mail, Passwort, Geburtsdatum und Geschlecht sind Pflichtfelder.</p>
+          </div>
+
+          <form class="stack-form" (ngSubmit)="registrieren()">
+            <label>
+              <span>Benutzername</span>
+              <input
+                type="text"
+                name="register-benutzername"
+                [(ngModel)]="registerForm.benutzername"
+                required
+              />
+            </label>
+
+            <label>
+              <span>E-Mail</span>
+              <input
+                type="email"
+                name="register-email"
+                [(ngModel)]="registerForm.email"
+                required
+              />
+            </label>
+
+            <label>
+              <span>Passwort</span>
+              <input
+                type="password"
+                name="register-passwort"
+                [(ngModel)]="registerForm.passwort"
+                minlength="6"
+                required
+              />
+            </label>
+
+            <label>
+              <span>Geburtsdatum</span>
+              <input
+                type="date"
+                name="register-geburtsdatum"
+                [(ngModel)]="registerForm.geburtsdatum"
+                required
+              />
+            </label>
+
+            <label>
+              <span>Geschlecht</span>
+              <select
+                name="register-geschlecht"
+                [(ngModel)]="registerForm.geschlecht"
+                required
+              >
+                <option value="D">Divers</option>
+                <option value="M">Maennlich</option>
+                <option value="W">Weiblich</option>
+              </select>
+            </label>
+
+            <button type="submit" class="secondary-button">Konto erstellen</button>
+          </form>
+        } @else {
+          <div class="panel-header">
+            <h2>{{ currentUser.benutzername }}</h2>
+            <p>
+              {{ currentUser.email }}<br />
+              Konto seit {{ currentUser.erstelltAm | date: 'dd.MM.yyyy' }}
+            </p>
+          </div>
+
+          <form class="stack-form" (ngSubmit)="profilSpeichern()">
+            <label>
+              <span>E-Mail</span>
+              <input type="email" name="profil-email" [(ngModel)]="profileForm.email" required />
+            </label>
+
+            <label>
+              <span>Neues Passwort</span>
+              <input
+                type="password"
+                name="profil-passwort"
+                [(ngModel)]="profileForm.neuesPasswort"
+                minlength="6"
+                placeholder="Leer lassen fuer keine Aenderung"
+              />
+            </label>
+
+            <button type="submit">Profil speichern</button>
+          </form>
+
+          @if (currentUser.administrator) {
+            <div class="divider"></div>
+            <div class="panel-header">
+              <h2>Admin-Werkzeug</h2>
+              <p>Benutzerkonten per ID deaktivieren.</p>
+            </div>
+
+            <form class="stack-form" (ngSubmit)="benutzerDeaktivieren()">
+              <label>
+                <span>Benutzer-ID</span>
+                <input
+                  type="number"
+                  name="admin-user-id"
+                  [(ngModel)]="adminForm.userId"
+                  min="1"
+                  required
+                />
+              </label>
+
+              <button type="submit" class="danger-button">Konto deaktivieren</button>
+            </form>
+          }
+
+          <button type="button" class="ghost-button full-width" (click)="abmelden()">
+            Abmelden
+          </button>
+        }
+      </section>
+    </aside>
+
+    <section class="content">
+      <section class="panel controls-panel">
+        <div class="panel-header compact">
+          <h2>Suche und Filter</h2>
+          <p>Titel, Kategorie, Erscheinungsjahr und Sortierung direkt kombinieren.</p>
+        </div>
+
+        <div class="control-grid">
+          <label>
+            <span>Suche</span>
+            <input type="search" name="suche" [(ngModel)]="filters.suche" placeholder="z. B. Inception" />
+          </label>
+
+          <label>
+            <span>Kategorie</span>
+            <select name="kategorie" [(ngModel)]="filters.kategorie">
+              <option value="">Alle Kategorien</option>
+              @for (kategorie of kategorien; track kategorie) {
+                <option [value]="kategorie">{{ kategorie }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            <span>Erscheinungsjahr</span>
+            <select name="jahr" [(ngModel)]="filters.jahr">
+              <option value="">Alle Jahre</option>
+              @for (jahr of jahre; track jahr) {
+                <option [value]="jahr">{{ jahr }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            <span>Sortierung</span>
+            <select name="sortierung" [(ngModel)]="filters.sortierung">
+              <option value="titel">Titel A-Z</option>
+              <option value="bewertung">Bewertung</option>
+              <option value="erscheinungsdatum">Erscheinungsdatum</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="button-row">
+          <button type="button" (click)="loadFilms()">Filter anwenden</button>
+          <button type="button" class="ghost-button" (click)="filterZuruecksetzen()">
+            Zuruecksetzen
+          </button>
+        </div>
+      </section>
+
+      <section class="panel form-panel">
+        <div class="panel-header compact">
+          <h2>{{ editingFilmId === null ? 'Neuen Film anlegen' : 'Film bearbeiten' }}</h2>
+          <p>Pflichtfelder aus dem Lastenheft plus Titelbild per URL oder Dateiupload.</p>
+        </div>
+
+        <form class="film-form" (ngSubmit)="filmSpeichern()">
+          <label>
+            <span>Titel</span>
+            <input type="text" name="film-titel" [(ngModel)]="filmForm.titel" required />
+          </label>
+
+          <label>
+            <span>Erscheinungsdatum</span>
+            <input
+              type="date"
+              name="film-erscheinungsdatum"
+              [(ngModel)]="filmForm.erscheinungsdatum"
+              required
+            />
+          </label>
+
+          <label>
+            <span>Filmlaenge (Minuten)</span>
+            <input
+              type="number"
+              name="film-laenge"
+              [(ngModel)]="filmForm.filmlaengeMin"
+              min="1"
+              required
+            />
+          </label>
+
+          <label>
+            <span>Kategorie</span>
+            <input type="text" name="film-kategorie" [(ngModel)]="filmForm.kategorie" required />
+          </label>
+
+          <label class="wide-field">
+            <span>Kurzbeschreibung</span>
+            <textarea
+              name="film-beschreibung"
+              [(ngModel)]="filmForm.kurzbeschreibung"
+              rows="4"
+              placeholder="Kurze Inhaltsangabe"
+            ></textarea>
+          </label>
+
+          <label class="wide-field">
+            <span>Titelbild URL</span>
+            <input
+              type="url"
+              name="film-bild-url"
+              [(ngModel)]="filmForm.titelbildPfad"
+              placeholder="https://..."
+            />
+          </label>
+
+          <label class="wide-field">
+            <span>Titelbild Datei</span>
+            <input type="file" accept="image/*" (change)="onPosterSelected($event)" />
+          </label>
+
+          <div class="poster-preview">
+            @if (filmForm.titelbildPfad) {
+              <img [src]="filmForm.titelbildPfad" alt="Titelbild Vorschau" />
+            } @else {
+              <div class="poster-fallback large">Poster</div>
+            }
+          </div>
+
+          <div class="button-row wide-field">
+            <button type="submit">{{ editingFilmId === null ? 'Film speichern' : 'Aenderungen sichern' }}</button>
+            <button type="button" class="ghost-button" (click)="filmFormZuruecksetzen()">
+              Formular leeren
+            </button>
+            <button type="button" class="ghost-button" (click)="removePoster()">
+              Titelbild entfernen
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="catalog-header">
+        <div>
+          <h2>Filmkatalog</h2>
+          <p>Alle Filmdaten, Durchschnittsbewertungen und Einzelkommentare im schnellen Zugriff.</p>
+        </div>
+        @if (loadingFilms) {
+          <span class="loading-chip">Laedt...</span>
+        }
+      </section>
+
+      <section class="catalog">
+        @for (film of films; track film.id) {
+          <article class="film-card">
+            <div class="poster-column">
+              @if (shouldShowPoster(film)) {
+                <img
+                  [src]="film.titelbildPfad"
+                  [alt]="'Titelbild von ' + film.titel"
+                  (error)="markPosterAsBroken(film.id)"
+                />
+              } @else {
+                <div class="poster-fallback">
+                  <span>{{ film.titel.slice(0, 1) }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="film-body">
+              <div class="film-topline">
+                <div>
+                  <p class="film-badge">{{ badgeForFilm(film) }}</p>
+                  <h3>{{ film.titel }}</h3>
+                </div>
+                <div class="rating-pill">
+                  <strong>{{ film.durchschnittsbewertung.toFixed(1) }}</strong>
+                  <span>/ 5</span>
+                </div>
+              </div>
+
+              <p class="film-meta">
+                {{ film.kategorie }} · {{ film.erscheinungsdatum | date: 'yyyy' }} · {{ film.filmlaengeAnzeige }}
+              </p>
+
+              <p class="film-description">
+                {{ film.kurzbeschreibung || 'Noch keine Beschreibung hinterlegt.' }}
+              </p>
+
+              <div class="card-actions">
+                <button type="button" class="ghost-button" (click)="toggleBewertungen(film.id)">
+                  {{ selectedFilmId === film.id ? 'Bewertungen ausblenden' : 'Bewertungen ansehen' }}
+                </button>
+                <button type="button" class="ghost-button" (click)="filmBearbeiten(film)">Bearbeiten</button>
+                <button type="button" class="danger-button" (click)="filmLoeschen(film.id)">Loeschen</button>
+              </div>
+
+              @if (selectedFilmId === film.id) {
+                <section class="ratings-panel">
+                  <div class="ratings-grid">
+                    <div>
+                      <h4>Einzelbewertungen</h4>
+                      @if (ratingsByFilm[film.id]?.length) {
+                        <div class="ratings-list">
+                          @for (bewertung of ratingsByFilm[film.id]; track bewertung.id) {
+                            <article class="rating-entry">
+                              <div class="rating-entry-topline">
+                                <strong>{{ bewertung.benutzername }}</strong>
+                                <span>{{ bewertung.sterne }} / 5</span>
+                              </div>
+                              <p>{{ bewertung.kommentar || 'Kein Kommentar vorhanden.' }}</p>
+                              <small>{{ bewertung.bewertetAm | date: 'dd.MM.yyyy HH:mm' }}</small>
+                            </article>
+                          }
+                        </div>
+                      } @else {
+                        <p class="empty-text">Noch keine Bewertung vorhanden.</p>
+                      }
+                    </div>
+
+                    <div class="rating-form-panel">
+                      <h4>Bewertung abgeben</h4>
+                      @if (currentUser) {
+                        <div class="stack-form">
+                          <label>
+                            <span>Sterne</span>
+                            <select [name]="'sterne-' + film.id" [(ngModel)]="ratingFormsByFilm[film.id].sterne">
+                              <option [ngValue]="5">5 Sterne</option>
+                              <option [ngValue]="4">4 Sterne</option>
+                              <option [ngValue]="3">3 Sterne</option>
+                              <option [ngValue]="2">2 Sterne</option>
+                              <option [ngValue]="1">1 Stern</option>
+                            </select>
+                          </label>
+
+                          <label>
+                            <span>Kommentar</span>
+                            <textarea
+                              [name]="'kommentar-' + film.id"
+                              [(ngModel)]="ratingFormsByFilm[film.id].kommentar"
+                              rows="4"
+                              placeholder="Optionaler Freitext"
+                            ></textarea>
+                          </label>
+
+                          <div class="button-row">
+                            <button type="button" (click)="bewertungSpeichern(film.id)">Bewertung speichern</button>
+                            <button type="button" class="ghost-button" (click)="eigeneBewertungLoeschen(film.id)">
+                              Eigene Bewertung loeschen
+                            </button>
+                          </div>
+                        </div>
+                      } @else {
+                        <p class="empty-text">Bitte zuerst anmelden, um 1 bis 5 Sterne zu vergeben.</p>
+                      }
+                    </div>
+                  </div>
+                </section>
+              }
+            </div>
+          </article>
+        } @empty {
+          <article class="empty-state">
+            <h3>Keine Filme gefunden</h3>
+            <p>Pruefen Sie die Filter oder legen Sie den ersten Film direkt ueber das Formular an.</p>
+          </article>
+        }
+      </section>
+    </section>
+  </main>
+</div>
